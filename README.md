@@ -40,24 +40,37 @@ flake8
 logging
 
 Структура проекта
+
 pizzeria_tests/
+
 ├── tests/                  # UI-тесты
+
 │   ├── test_cart.py         # Добавление товара в корзину
+
 │   └── test_promo.py        # Применение промокода
-│
+
 ├── pages/                  # Page Object слой
+
 │   ├── base_page.py        # Базовый класс страницы
+
 │   ├── home_page.py        # Главная страница
+
 │   └── cart_page.py        # Корзина
-│
+
 ├── utils/
+
 │   └── logger.py           # Логирование
-│
+
 ├── conftest.py             # pytest-фикстуры
+
 ├── requirements.txt        # Зависимости
+
 ├── pytest.ini              # Конфигурация pytest
+
 ├── .flake8                 # Code style
+
 └── README.md               # Документация
+
 Установка и запуск
 
 Клонировать репозиторий
