@@ -1,0 +1,5 @@
+pytest
+pytest-playwright
+allure-pytest
+playwright
+flake8

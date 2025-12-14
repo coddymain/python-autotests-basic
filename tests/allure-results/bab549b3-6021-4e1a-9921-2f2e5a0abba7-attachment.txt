@@ -1,0 +1,2 @@
+[32mINFO    [0m test_logger:conftest.py:10 Запуск браузера
+[32mINFO    [0m test_logger:conftest.py:16 Закрытие браузера
