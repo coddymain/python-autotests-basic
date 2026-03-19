@@ -42,6 +42,8 @@ Thumbs.db
 ### 5. Файлы от редакторов кода и IDE ###
 # Настройки VS Code
 .vscode/
+# Личный гайд по проекту
+PROJECT_GUIDE.md
 # Настройки PyCharm/IntelliJ IDEA
 .idea/
 # Служебные файлы от редакторов
