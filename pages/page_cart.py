@@ -1,223 +1,253 @@
-import time
+"""
+Page Object для страниц: Главная, Корзина, Оформление заказа, Аккаунт, Бонусная программа.
+Все действия с сайтом pizzeria.skillbox.cc собраны здесь.
+"""
+import re
+from typing import Optional
+
 import allure
+from playwright.sync_api import Page, Route, expect
+
+from config import Config
 from pages.base_page import BasePage
 from utils.logger import logger
-import re
-from playwright.sync_api import Page, expect, Route
+
 
 class PageCart(BasePage):
+    """Page Object для работы с корзиной и оформлением заказа."""
+
+    # ──────────────────────────────────────────────
+    # Локаторы — CSS-селекторы элементов на сайте
+    # ──────────────────────────────────────────────
+    class Locators:
+        # Авторизация (страница /my-account/)
+        LOGIN_INPUT = "#username"
+        PASSWORD_INPUT = "#password"
+        LOGIN_BUTTON = 'button[name="login"]'
+        ACCOUNT_CONTENT = ".woocommerce-MyAccount-content"
+
+        # Корзина
+        ADD_TO_CART_BUTTON = 'a[data-product_id="425"]'
+        CART_TABLE = ".shop_table.cart"
+        CART_EMPTY = ".cart-empty"
+        QUANTITY_INPUT = 'input.qty'
+        REMOVE_ITEM = "a.remove"
+        UPDATE_CART = 'button[name="update_cart"]'
+        CART_TOTAL = ".order-total .amount"
+        CART_SUBTOTAL = ".cart-subtotal .amount"
+
+        # Купоны
+        COUPON_INPUT = "#coupon_code"
+        APPLY_COUPON = 'button[name="apply_coupon"]'
+        COUPON_SUCCESS = ".woocommerce-message"
+        COUPON_ERROR = ".woocommerce-error"
+
+        # Оформление заказа (страница /checkout/)
+        FIRST_NAME = "#billing_first_name"
+        LAST_NAME = "#billing_last_name"
+        COUNTRY = "#billing_country"
+        ADDRESS = "#billing_address_1"
+        CITY = "#billing_city"
+        STATE = "#billing_state"
+        POSTCODE = "#billing_postcode"
+        PHONE = "#billing_phone"
+        PAYMENT_COD = "#payment_method_cod"
+        TERMS = "#terms"
+        PLACE_ORDER = "#place_order"
+        ORDER_RECEIVED = "p.woocommerce-thankyou-order-received"
+
+        # Бонусная программа (страница /bonus/)
+        BONUS_USERNAME = "#bonus_username"
+        BONUS_PHONE = "#bonus_phone"
+        BONUS_SUBMIT = "button.woocommerce-form-register__submit"
+        BONUS_SUCCESS = ".woocommerce-message"
+
+    # ──────────────────────────────────────────────
+    # Инициализация
+    # ──────────────────────────────────────────────
     def __init__(self, page: Page):
-        self.page = page
+        super().__init__(page)
+        self._price_before: Optional[float] = None
 
+    # ──────────────────────────────────────────────
+    # Навигация
+    # ──────────────────────────────────────────────
+    def open(self) -> None:
+        """Открывает главную страницу."""
+        with allure.step("Открыть главную страницу"):
+            self.open_url(Config.BASE_URL)
 
-    URL = 'https://pizzeria.skillbox.cc/'
-    CART_LOCTOR = '(//a/text()[. ="Корзина"])[1]' # Корзина
-    DESCRIPTION_TAB = "//h1[@class='product_title entry-title']" # описние
-    COUTN_CART ='#quantity_67b8ac6f731fd'  # Счетчик карзины
-    REFRESH_CART = "//button[contains(text(),'Обновить корзину')]" # Кнопка обновить корзину
-    CHEESE_BORT_LOCATOR = "//p[contains(text(),'Сырный борт')]"
+    # ──────────────────────────────────────────────
+    # Корзина
+    # ──────────────────────────────────────────────
+    def clear_cart(self) -> None:
+        """Полностью очищает корзину."""
+        with allure.step("Очистить корзину"):
+            self.page.goto(f"{Config.BASE_URL}/cart/")
+            self.page.wait_for_load_state("networkidle")
 
+            while self.page.locator(self.Locators.REMOVE_ITEM).count() > 0:
+                self.page.locator(self.Locators.REMOVE_ITEM).first.click()
+                self.page.wait_for_load_state("networkidle")
+                self.page.wait_for_timeout(500)
 
-    # АВТОРИЗНЦИЯ
-    # Открытие главной страницы
-    def open(self):
-        self.page.goto(self.URL)
+    def add_pizza_to_cart(self) -> None:
+        """Добавляет «Пиццу 4 в 1» в корзину через прямой URL (самый надёжный способ)."""
+        with allure.step("Добавить пиццу в корзину"):
+            self.page.goto(f"{Config.BASE_URL}/?add-to-cart=425")
+            self.page.wait_for_load_state("networkidle")
 
+    def go_to_cart(self) -> None:
+        """Переходит на страницу корзины."""
+        with allure.step("Перейти в корзину"):
+            self.page.goto(f"{Config.BASE_URL}/cart/")
+            self.page.wait_for_selector(
+                f"{self.Locators.CART_TABLE}, {self.Locators.CART_EMPTY}",
+                timeout=15000,
+            )
 
-    # Перейти в меню оформление заказа
-    def menu_make_order(self):
-        self.page.locator("#menu-item-31").get_by_role("link", name="Оформление заказа").click()
+    def get_cart_quantity(self) -> str:
+        """Возвращает количество первого товара в корзине."""
+        locator = self.page.locator(self.Locators.QUANTITY_INPUT).first
+        locator.wait_for(state="visible", timeout=10000)
+        return locator.input_value()
 
+    def get_total_price(self) -> float:
+        """Возвращает итоговую цену как число."""
+        self.page.wait_for_timeout(1000)
+        price_text = self.page.locator(self.Locators.CART_SUBTOTAL).first.text_content() or "0"
+        clean = price_text.replace("₽", "").replace(" ", "").replace(",", ".").replace("\xa0", "").strip()
+        return float(clean)
 
-    # Пеерйти в меню мой аккаунт
-    def menu_my_account(self):
-       self.page.locator("#menu-item-30").get_by_role("link", name="Мой аккаунт").click()
-       self.page.wait_for_timeout(timeout=120)
-   # Заполниить поле логин
-    def fill_imput_login(self):
-       self.page.get_by_role("textbox", name="Имя пользователя или почта *").fill("erastov")
-    # Заполниить поле пароль
-    def fill_input_password(self):
-       self.page.get_by_role("textbox", name="Пароль *").fill("12345")
-    # Кликнуть по кнопке войти
-    def clik_button_login(self):
-       self.page.get_by_role("button", name="Войти").click()
-    # Проверить что бы успешно залогились
-    def checking_have_to_login(self):
-       expect(self.page.locator("#post-22")).to_contain_text("Привет erastov (Выйти)")
+    # ──────────────────────────────────────────────
+    # Купоны
+    # ──────────────────────────────────────────────
+    def apply_coupon(self, code: str) -> None:
+        """Применяет купон."""
+        with allure.step(f"Применить купон: {code}"):
+            self.page.locator(self.Locators.COUPON_INPUT).fill(code)
+            self.page.locator(self.Locators.APPLY_COUPON).click()
+            # Ждём появления любого сообщения
+            self.page.wait_for_selector(
+                f"{self.Locators.COUPON_SUCCESS}, {self.Locators.COUPON_ERROR}",
+                timeout=10000,
+            )
 
-        # Открытие глванойстраницы
-    def open(self):
-        self.page.goto(self.URL)
-    def add_pizza_to_cart(self):
-        # Клик по кнопке "Добавить пиццу «4 в 1» в корзину"
-        self.page.get_by_role("link", name="Add “Пицца \"4 в 1\"” to your").click()
+    def apply_invalid_coupon(self, code: str) -> str:
+        """Применяет невалидный купон и возвращает текст ошибки."""
+        with allure.step(f"Применить невалидный купон: {code}"):
+            self.page.locator(self.Locators.COUPON_INPUT).fill(code)
+            self.page.locator(self.Locators.APPLY_COUPON).click()
+            error = self.page.locator(self.Locators.COUPON_ERROR)
+            expect(error).to_be_visible(timeout=10000)
+            return error.text_content() or ""
 
-    def in_to_cart(self):
-        self.page.locator("#menu-item-29").get_by_role("link", name="Корзина").click()
-        # Обновить корзину
-        self.page.reload()
-    def checking_cart_is_not_empty(self):
-        # Проверка, что значение в поле количества равно "1" (пицца добавлена в корзину)
-        expect(self.page.get_by_role("spinbutton", name="Пицца \"4 в 1\" quantity")).to_have_value('1')
-    # Кликаем по изображению пиццы
-    def click_pizza_img(self):
-# Кликнуть по пицце (с явным ожиданием)
-        pizza_link = self.page.get_by_role("link", name="Пицца «4 в 1»", exact=True)
-        pizza_link.wait_for()  # Ждем, пока ссылка появится
-        pizza_link.click()
+    def simulate_coupon_error(self, code: str) -> None:
+        """Симулирует ошибку 500 при применении купона (перехват сети)."""
+        with allure.step(f"Симуляция ошибки 500 для купона: {code}"):
+            def block(route: Route) -> None:
+                route.fulfill(status=500, body="Internal Server Error")
 
-    def checking_description_is_that_pizza(self):
-        expect(self.page.locator("#product-425")).to_contain_text("Пицца «4 в 1»")
+            self.page.route(re.compile(r"wc-ajax=apply_coupon"), block)
+            self.page.locator(self.Locators.COUPON_INPUT).fill(code)
+            self.page.locator(self.Locators.APPLY_COUPON).click()
 
+    # ──────────────────────────────────────────────
+    # Авторизация
+    # ──────────────────────────────────────────────
+    def go_to_account(self) -> None:
+        """Переходит на страницу «Мой аккаунт»."""
+        with allure.step("Перейти в Мой аккаунт"):
+            self.page.goto(f"{Config.BASE_URL}/my-account/")
+            self.page.wait_for_load_state("networkidle")
 
-    def increase_velue_in_cart(self): # Увеличить количество корзины.
-       self.page.get_by_role("spinbutton", name="Пицца \"4 в 1\" quantity").fill("2")
+    def login(
+        self,
+        username: str = Config.USER_LOGIN,
+        password: str = Config.USER_PASSWORD,
+    ) -> None:
+        """Выполняет вход. Если уже залогинен — пропускает."""
+        # Убеждаемся что мы на странице аккаунта
+        if "/my-account" not in self.page.url:
+            self.go_to_account()
 
-    def refresh_cart(self):
-        self.page.get_by_role("button", name="Обновить корзину").click()
+        # Если уже залогинены — выходим
+        if self.page.locator(self.Locators.ACCOUNT_CONTENT).count() > 0:
+            content = self.page.locator(self.Locators.ACCOUNT_CONTENT).text_content() or ""
+            if username in content:
+                logger.info(f"✅ Уже залогинен как {username}")
+                return
 
+        with allure.step(f"Войти как {username}"):
+            self.page.locator(self.Locators.LOGIN_INPUT).fill(username)
+            self.page.locator(self.Locators.PASSWORD_INPUT).fill(password)
+            self.page.locator(self.Locators.LOGIN_BUTTON).click()
+            self.page.wait_for_load_state("networkidle")
 
-    def checking_cart_is_increase(self):
-        expect(self.page.get_by_role("spinbutton", name='Пицца "4 в 1" quantity')).to_have_value("2")
+    def verify_logged_in(self, username: str = Config.USER_LOGIN) -> None:
+        """Проверяет, что пользователь залогинен."""
+        with allure.step(f"Проверить что {username} залогинен"):
+            expect(self.page.locator(self.Locators.ACCOUNT_CONTENT)).to_be_visible(timeout=10000)
+            expect(self.page.locator("body")).to_contain_text(username)
 
-    # Выбрать борт пицы из возможных
-    def choose_chees_bort_pizza(self):
-        self.page.get_by_label("Выбор борта для пиццы *").select_option("55.00")
+    # ──────────────────────────────────────────────
+    # Оформление заказа
+    # ──────────────────────────────────────────────
+    def go_to_checkout(self) -> None:
+        """Переходит на страницу оформления заказа."""
+        with allure.step("Перейти к оформлению"):
+            self.page.goto(f"{Config.BASE_URL}/checkout/")
+            self.page.wait_for_selector(self.Locators.FIRST_NAME, timeout=15000)
 
-        # Нажать кнопку добавить пиццу в корзину
-    def add_pizza_with_chees_bort(self):
-        self.page.get_by_role("button", name="В корзину").click()
+    def checkout(
+        self,
+        name: str,
+        surname: str,
+        address: str,
+        city: str,
+        state: str,
+        postcode: str,
+        phone: str,
+    ) -> None:
+        """Заполняет форму заказа и нажимает «Оформить заказ»."""
+        self.go_to_checkout()
 
-    def clck_autorisation(self):
-        self.page.get_by_role("link", name="Авторизуйтесь").click()
+        with allure.step("Заполнить данные и оформить заказ"):
+            self.page.locator(self.Locators.FIRST_NAME).fill(name)
+            self.page.locator(self.Locators.LAST_NAME).fill(surname)
+            self.page.locator(self.Locators.COUNTRY).select_option("RU")
+            self.page.locator(self.Locators.ADDRESS).fill(address)
+            self.page.locator(self.Locators.CITY).fill(city)
+            self.page.locator(self.Locators.STATE).fill(state)
+            self.page.locator(self.Locators.POSTCODE).fill(postcode)
+            self.page.locator(self.Locators.PHONE).fill(phone)
 
-    def click_button_login(self):
-       self.page.get_by_role("button", name="Войти").click()
+            self.page.locator(self.Locators.PAYMENT_COD).check()
+            self.page.locator(self.Locators.TERMS).check()
+            self.page.wait_for_timeout(500)
+            self.page.locator(self.Locators.PLACE_ORDER).click()
 
-    def fill_all_feald(self):
-        self.page.get_by_role("textbox", name="Имя *").fill("Иван")
-        self.page.get_by_role("textbox", name="Фамилия *").fill("Иванов")
-        self.page.get_by_role("textbox", name="Russia").click()
-        self.page.get_by_role("option", name="Russia").click()
-        self.page.get_by_role("textbox", name="Адрес *").fill("ул. Ивановская д.1")
-        self.page.get_by_role("textbox", name="Город / Населенный пункт *").fill("Иваново")
-        self.page.get_by_role("textbox", name="Область *").fill("Ивановская")
-        self.page.get_by_role("textbox", name="Почтовый индекс *").fill("134506")
-        self.page.get_by_role("textbox", name="Телефон *").fill("+79116118292")
-        self.page.get_by_role("textbox", name="Дата заказа (дополнительно)").fill("2025-03-19")
-        self.page.get_by_role("radio", name="Оплата при доставке").check()
-        self.page.get_by_role("checkbox", name="I have read and agree to the").check()
-    def click_make_order(self):
-        self.page.get_by_role("button", name="Оформить заказ").click()
-    def checking_maged_order(self):
-        expect(self.page.locator("#post-24")).to_contain_text("Заказ получен")
+    def verify_order_received(self) -> None:
+        """Проверяет что заказ успешно принят."""
+        with allure.step("Проверить подтверждение заказа"):
+            msg = self.page.locator(self.Locators.ORDER_RECEIVED)
+            expect(msg).to_be_visible(timeout=30000)
 
+    # ──────────────────────────────────────────────
+    # Бонусная программа
+    # ──────────────────────────────────────────────
+    def register_bonus_card(self, username: str, phone: str) -> None:
+        """Регистрирует бонусную карту."""
+        with allure.step(f"Оформить бонусную карту для {username}"):
+            self.page.goto(f"{Config.BASE_URL}/bonus/")
+            self.page.wait_for_selector(self.Locators.BONUS_USERNAME, timeout=15000)
+            self.page.locator(self.Locators.BONUS_USERNAME).fill(username)
+            self.page.locator(self.Locators.BONUS_PHONE).fill(phone)
+            self.page.locator(self.Locators.BONUS_SUBMIT).click()
 
-        # Используем промокод
-    def fill_kupon_GIVEMEHALYAVA(self):
-
-        self.page.get_by_role("textbox", name="Купон:").fill("GIVEMEHALYAVA")
-    def click_apply_kupon(self):
-        self.page.get_by_role("button", name="Применить купон").click()
-        self.page.reload()
-        self.total_price = self.page.locator("//td[@data-title='Сумма']")
-
-        self.total_price = self.total_price.text_content().replace("₽", "").replace(",", ".")
-        self.total_price = float(self.total_price)
-    def checking_kuppon_is_good(self):
-        self.discounted_price = (self.total_price * 0.9)
-        with allure.step("Проверяем применение промокода"):
-            logger.info(f"Сумма до применения купона {self.total_price} сумма после приенения купона {self.discounted_price}")
-        assert self.total_price * 0.9 == self.discounted_price, "Скидка не применена!"
-
-
-
-    def fill_facke_kupon_DC120(self):
-        self.page.get_by_role("textbox", name="Купон:").fill("DC120")
-        self.page.reload()
-
-    def checking_fake_kuppon_is_no_good(self):
-        self.price = self.page.locator(("(//td[@data-title='Общая стоимость'])[1]"))
-        self.total_price = self.page.locator("//td[@data-title='Сумма']")
-
-        self.price = self.price.text_content().replace("₽", "").replace(",", ".")
-        self.price = float(self.price)
-        self.total_price = self.total_price.text_content().replace("₽", "").replace(",", ".")
-        self.total_price = float(self.total_price)
-
-        with allure.step("Проверяем применение промокода"):
-            logger.info(f"Сумма до применения купона {self.total_price} сумма после приенения купона {self.price}")
-        assert self.total_price == self.price, "Скидка не применена!"
-
-
-
-
-    def block_request_kupon(page: Page) -> None:
-        page.goto("https://pizzeria.skillbox.cc/")
-        page.get_by_role("link", name="Add “Пицца \"4 в 1\"” to your").click()
-        page.wait_for_timeout(timeout=2000)
-
-        page.locator("#menu-item-31").get_by_role("link", name="Оформление заказа").click()
-        time.sleep(1)
-    def autorisetion_get_order(self: Page) -> None:
-        self.page.get_by_role("link", name="Авторизуйтесь").click()
-        self.page.get_by_role("textbox", name="Имя пользователя или почта *").fill("erastov")
-
-        self.page.get_by_role("textbox", name="Пароль *").fill("12345")
-        self.page.get_by_role("button", name="Войти").click()
-
-    def sent_kupon_GIVEMEHALYAVA__and_block_rquest(self: Page) -> None:
-        self.page.wait_for_timeout(timeout=2000)
-        self.page.wait_for_selector("//a[@class='showcoupon']").click()
-        self.page.wait_for_selector("#coupon_code").fill("GIVEMEHALYAVA")
-
-        # Перехватить и заблокировать запрос с купоном (вернуть ошибку 500)
-        def block_request(route: Route):
-            route.fulfill(status=500, body="Internal Server Error")
-
-            self.page.route(re.compile(r'apply_coupon'), block_request)
-            # Применить купон
-            self.page.get_by_role("button", name="Применить купон").click()
-        # Проверка, что купон не применился, сумма не изменилась
-    def fill_data_and_check(self: Page) -> None:
-        self.cart_price = self.page.locator("//a[@class='cart-contents wcmenucart-contents']")
-        self.total_price = self.page.locator("(//span[@class='woocommerce-Price-amount amount'])[3]")
-        # Форматируем и переводим в формат float
-        self.cart_price = self.cart_price.text_content().replace("₽", "").replace(",", ".").replace('[', '').replace(']', '')
-        self.cart_price = float(self.cart_price)
-        self.total_price = self.total_price.text_content().replace("₽", "").replace(",", ".")
-        self.total_price = float(self.total_price)
-
-        with allure.step("Проверяем применение промокода"):
-            logger.info(f"Сумма до применения купона {self.total_price} сумма после приенения купона {self.cart_price}")
-        assert self.total_price ==self. cart_price, "Скидка не применена!"
-
-        self.page.get_by_role("textbox", name="Имя *").fill("Иван")
-        self.page.get_by_role("textbox", name="Фамилия *").fill("Иванов")
-        self.page.get_by_role("textbox", name="Russia").click()
-        self.page.get_by_role("option", name="Russia").click()
-        self.page.get_by_role("textbox", name="Адрес *").fill("ул. Ивановская д.1")
-        self.page.get_by_role("textbox", name="Город / Населенный пункт *").fill("Иваново")
-        self.page.get_by_role("textbox", name="Область *").fill("Ивановская")
-        self.page.get_by_role("textbox", name="Почтовый индекс *").fill("134506")
-        self.page.get_by_role("textbox", name="Телефон *").fill("+79116118292")
-        self.page.get_by_role("textbox", name="Дата заказа (дополнительно)").fill("2025-02-19")
-        self.page.get_by_role("radio", name="Оплата при доставке").check()
-        self.page.get_by_role("checkbox", name="I have read and agree to the").check()
-
-        self.page.get_by_role("button", name="Оформить заказ").click()
-        expect(self.page.locator("#post-24")).to_contain_text("Заказ получен")
-
-    def registration_bonus_program(self: Page) -> None:
-        self.page.wait_for_timeout(timeout=2000)
-    def fill_data_bonus(self: Page) -> None:
-        self.page.get_by_role('link', name='Бонусная программа').nth(1).click()
-        self.page.wait_for_selector('#bonus_username').fill('test')
-        self.page.wait_for_selector('#bonus_phone').fill('+71234567890')
-    def click_button_get_bonus(self: Page) -> None:
-        self.page.get_by_role('button', name='Оформить карту').click()
-        self.page.on('dialog', lambda dialog: dialog.accept())
-    def check_registration_bonus_program(self: Page) -> None:
-        self.result = self.page.wait_for_selector("//h3[contains(text(),'Ваша карта оформлена')]").text_content()
-        assert 'Ваша карта оформлена!' == self.result, 'Бонус не оформлен'
+    def verify_bonus_success(self) -> None:
+        """Проверяет успешную регистрацию бонусной карты."""
+        with allure.step("Проверить успешную выдачу бонусной карты"):
+            # После оформления форма заменяется на <h3>Ваша карта оформлена!</h3>
+            msg = self.page.get_by_text("Ваша карта оформлена")
+            expect(msg).to_be_visible(timeout=15000)

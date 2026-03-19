@@ -1,0 +1,32 @@
+INFO - 2026-03-19 20:30:13,620 - test_logger - 🚀 Запуск браузера
+INFO - 2026-03-19 20:30:14,779 - test_logger - 🌍 Открываю: https://pizzeria.skillbox.cc
+INFO - 2026-03-19 20:30:18,790 - test_logger - 🛑 Закрытие браузера
+INFO - 2026-03-19 20:30:18,820 - test_logger - 🚀 Запуск браузера
+INFO - 2026-03-19 20:30:19,298 - test_logger - 🌍 Открываю: https://pizzeria.skillbox.cc
+INFO - 2026-03-19 20:30:22,949 - test_logger - 🛑 Закрытие браузера
+INFO - 2026-03-19 20:30:22,973 - test_logger - 🚀 Запуск браузера
+INFO - 2026-03-19 20:30:23,455 - test_logger - 🌍 Открываю: https://pizzeria.skillbox.cc
+INFO - 2026-03-19 20:30:26,984 - test_logger - 🛑 Закрытие браузера
+INFO - 2026-03-19 20:30:27,009 - test_logger - 🚀 Запуск браузера
+INFO - 2026-03-19 20:30:27,492 - test_logger - 🌍 Открываю: https://pizzeria.skillbox.cc
+INFO - 2026-03-19 20:30:31,519 - test_logger - 🛑 Закрытие браузера
+INFO - 2026-03-19 20:30:31,544 - test_logger - 🚀 Запуск браузера
+INFO - 2026-03-19 20:30:32,013 - test_logger - 🌍 Открываю: https://pizzeria.skillbox.cc
+INFO - 2026-03-19 20:30:35,373 - test_logger - 🛑 Закрытие браузера
+INFO - 2026-03-19 20:30:35,399 - test_logger - 🚀 Запуск браузера
+INFO - 2026-03-19 20:30:35,887 - test_logger - 🌍 Открываю: https://pizzeria.skillbox.cc
+INFO - 2026-03-19 20:30:39,084 - test_logger - 🛑 Закрытие браузера
+INFO - 2026-03-19 20:30:39,109 - test_logger - 🚀 Запуск браузера
+INFO - 2026-03-19 20:30:39,575 - test_logger - 🌍 Открываю: https://pizzeria.skillbox.cc
+INFO - 2026-03-19 20:30:42,527 - test_logger - ✅ Симуляция ошибки 500 выполнена
+INFO - 2026-03-19 20:30:42,528 - test_logger - 🛑 Закрытие браузера
+INFO - 2026-03-19 20:30:42,557 - test_logger - 🚀 Запуск браузера
+INFO - 2026-03-19 20:30:43,068 - test_logger - 🌍 Открываю: https://pizzeria.skillbox.cc
+INFO - 2026-03-19 20:30:50,248 - test_logger - 🛑 Закрытие браузера
+INFO - 2026-03-19 20:30:50,276 - test_logger - 🚀 Запуск браузера
+INFO - 2026-03-19 20:30:50,768 - test_logger - 🌍 Открываю: https://pizzeria.skillbox.cc
+INFO - 2026-03-19 20:30:58,925 - test_logger - 🛑 Закрытие браузера
+INFO - 2026-03-19 20:30:58,953 - test_logger - API GET: https://pizzeria.skillbox.cc/wp-json/wp/v2/pages, params=None
+INFO - 2026-03-19 20:30:59,629 - test_logger - API ответ: 200
+INFO - 2026-03-19 20:30:59,631 - test_logger - API GET: https://pizzeria.skillbox.cc/wp-json/wp/v2/pages/150, params=None
+INFO - 2026-03-19 20:31:00,024 - test_logger - API ответ: 404

@@ -48,3 +48,10 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+### 6. Файлы от инструментов тестирования (Pytest, Allure, Logs) ###
+.pytest_cache/
+allure-results/
+reports/
+logs/
+*.log

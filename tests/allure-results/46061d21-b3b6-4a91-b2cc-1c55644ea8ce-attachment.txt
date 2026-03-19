@@ -1,3 +1,0 @@
-[32mINFO    [0m test_logger:conftest.py:10 Запуск браузера
-[32mINFO    [0m test_logger:page_cart.py:131 Сумма до применения купона 391.5 сумма после приенения купона 352.35
-[32mINFO    [0m test_logger:conftest.py:16 Закрытие браузера

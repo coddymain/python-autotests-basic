@@ -1,28 +1,23 @@
-
+"""
+Базовый класс для всех Page Object.
+Содержит общие методы, которые используются на любой странице.
+"""
 from utils.logger import logger
+from playwright.sync_api import Page
+
 
 class BasePage:
-    """Базовый класс для всех страниц с логированием."""
-    def __init__(self, page):
+    """Базовый класс для Page Objects."""
+
+    def __init__(self, page: Page):
         self.page = page
 
-    def open_url(self, url):
-        """Открытие страницы."""
-        logger.info(f"🌍 Открытие страницы: {url}")
+    def open_url(self, url: str) -> None:
+        """Открывает указанный URL."""
+        logger.info(f"🌍 Открываю: {url}")
         self.page.goto(url)
+        self.page.wait_for_load_state("domcontentloaded")
 
-    def click(self, locator):
-        """Клик по элементу."""
-        logger.info(f"🖱️ Клик по элементу: {locator}")
-        self.page.locator(locator).click()
-
-    def enter_text(self, locator, text):
-        """Ввод текста."""
-        logger.info(f"⌨️ Ввод текста '{text}' в {locator}")
-        self.page.locator(locator).fill(text)
-
-    def get_text(self, locator):
-        """Получение текста элемента."""
-        text = self.page.locator(locator).text_content()
-        logger.info(f"📖 Получен текст из {locator}: '{text}'")
-        return text
+    def get_text(self, selector: str) -> str:
+        """Возвращает текст элемента по селектору."""
+        return self.page.locator(selector).text_content() or ""

@@ -1,213 +1,51 @@
-UI Autotests (Python + Playwright)
-README (RU)
-
-Уровень проекта: Junior+ / Middle QA Automation
-
-О проекте
-
-Данный репозиторий содержит учебно-практический проект по UI-автоматизации тестирования веб-приложения (онлайн-пиццерия).
-
-Проект ориентирован на уровень Junior+ / Middle QA Automation Engineer и демонстрирует умение:
-
-строить архитектуру автотестов по Page Object Model;
-
-писать читаемые и поддерживаемые UI-тесты;
-
-работать с Playwright (sync API);
-
-использовать pytest как основной тестовый фреймворк;
-
-формировать Allure-отчёты;
-
-подключать логирование и базовый code style.
-
-Проект может использоваться как GitHub-портфолио при поиске работы.
-
-Технологический стек
-
-Python 3.10+
-
-pytest
-
-Playwright
-
-pytest-playwright
-
-Allure
-
-flake8
-
-logging
-
-Структура проекта
-
-pizzeria_tests/
-
-├── tests/                  # UI-тесты
-
-│   ├── test_cart.py         # Добавление товара в корзину
-
-│   └── test_promo.py        # Применение промокода
-
-├── pages/                  # Page Object слой
-
-│   ├── base_page.py        # Базовый класс страницы
-
-│   ├── home_page.py        # Главная страница
-
-│   └── cart_page.py        # Корзина
-
-├── utils/
-
-│   └── logger.py           # Логирование
-
-├── conftest.py             # pytest-фикстуры
-
-├── requirements.txt        # Зависимости
-
-├── pytest.ini              # Конфигурация pytest
-
-├── .flake8                 # Code style
-
-└── README.md               # Документация
-
-Установка и запуск
-
-Клонировать репозиторий
-
-git clone https://github.com/<your-username>/<repo-name>.git
-cd <repo-name>
-
-Создать виртуальное окружение
-
-python -m venv venv
-source venv/bin/activate      # macOS / Linux
-venv\\Scripts\\activate         # Windows
-
-Установить зависимости
-
-pip install -r requirements.txt
-
-Установить браузеры Playwright
-
-playwright install
-Запуск тестов
-pytest
-
-Запуск конкретного теста:
-
-pytest tests/test_cart.py
-Allure-отчёты
-
-Генерация отчёта:
-
-pytest --alluredir=reports
-
-Просмотр:
-
-allure serve reports
-Реализованные проверки
-
-добавление товара в корзину;
-
-проверка, что корзина не пуста;
-
-применение корректного промокода;
-
-проверка изменения итоговой суммы.
-
-Логирование
-
-Ключевые действия логируются и выводятся:
-
-в консоль;
-
-в файл test_log.log.
-
-CI / GitHub Actions
-
-Проект подготовлен к подключению CI:
-
-headless-запуск браузера;
-
-запуск тестов по pytest;
-
-генерация Allure-результатов.
-
-Workflow может быть реализован с использованием GitHub Actions.
-
-Ограничения
-
-Зависимость от доступности тестового стенда.
-
-Проверка скидки реализована в упрощённом виде и может быть расширена.
-
-Идеи для развития
-
-параметризация тестов;
-
-явные ожидания;
-
-негативные сценарии;
-
-API-тесты;
-
-полноценный CI с Allure.
-
-README (EN)
-About the project
-
-This repository contains a UI test automation project for a demo web application (online pizzeria).
-
-The project is designed for Junior+ / Middle QA Automation Engineers and demonstrates:
-
-Page Object Model architecture;
-
-UI automation using Playwright;
-
-pytest as a test framework;
-
-Allure reporting integration;
-
-logging and basic code quality practices.
-
-The project can be used as a GitHub portfolio example.
-
-Tech stack
-
-Python 3.10+
-
-pytest
-
-Playwright
-
-pytest-playwright
-
-Allure
-
-flake8
-
-logging
-
-Run tests
-pytest
-
-Generate Allure report:
-
-pytest --alluredir=reports
-allure serve reports
-CI / GitHub Actions
-
-The project structure allows easy CI integration:
-
-headless browser execution;
-
-pytest-based test runs;
-
-Allure results generation.
-
-Author
-
-Erastov Dmitriy
-
-Автор: Ерастов Дмитрий
+# Python Autotests Basic (Middle-level Refactored)
+
+Этот проект представляет собой автоматизированный набор тестов для учебного стенда "Пиццерия" (Skillbox). Проект доведен до стандарта **Middle-level QA Automation**.
+
+## Основные изменения (Refactoring)
+
+- **Page Object Model (POM)**: Полное разделение локаторов и логики. Локаторы вынесены во вложенный класс `Locators`.
+- **BasePage**: Создан базовый класс с общими методами (click, fill, wait) и типизацией.
+- **Fixtures**: Использование фикстур `pytest` для управления жизненным циклом страниц и данных (см. `conftest.py`).
+- **API Helper**: Написан удобный хелпер для работы с API, который автоматически логирует запросы и добавляет шаги в Allure.
+- **Data Management**: Тестовые данные (купоны, данные пользователей) вынесены в `data/test_data.py`.
+- **Logging**: Настроено детальное логирование всех действий.
+- **Reporting**: Интеграция с Allure (шаги, заголовки, скриншоты при провалах).
+- **CI/CD**: Настроен GitHub Actions для автоматического запуска тестов.
+
+## Структура проекта
+
+- `pages/`: Объекты страниц (Page Objects).
+- `tests/ui/`: UI-тесты (Playwright).
+- `tests/api/`: API-тесты (Requests/APIHelper).
+- `data/`: Тестовые данные и константы.
+- `utils/`: Утилиты (логгер, API-хелпер).
+- `config.py`: Конфигурация проекта (URL, логины).
+- `conftest.py`: Фикстуры pytest.
+- `.github/workflows/`: Настройки CI/CD.
+
+## Как запустить
+
+1.  **Создать виртуальное окружение**:
+    ```bash
+    python3 -m venv venv
+    source venv/bin/activate
+    ```
+2.  **Установить зависимости**:
+    ```bash
+    pip install -r requirements.txt
+    playwright install
+    ```
+3.  **Запустить тесты**:
+    ```bash
+    pytest --alluredir=allure-results
+    ```
+4.  **Посмотреть отчет**:
+    ```bash
+    allure serve allure-results
+    ```
+
+## Конфигурация
+Все настройки находятся в `config.py`. Вы можете переопределить их через переменные окружения:
+- `BASE_URL`: URL сайта
+- `HEADLESS`: `true`/`false` (по умолчанию `true`)
